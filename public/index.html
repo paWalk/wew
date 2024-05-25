@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Messages</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            padding: 20px;
+            overflow: hidden; /* Hide scrollbars */
+            position: relative; /* Position relative for absolute positioning of static text */
+        }
+
+        #staticText {
+            position: absolute;
+            top: 50%; /* Center vertically */
+            left: 50%; /* Center horizontally */
+            transform: translate(-50%, -50%);
+            text-align: center;
+            font-size: 36px; /* Adjust font size */
+            z-index: 9999; /* Ensure static text is on top */
+            opacity: 0.7; /* Slightly reduced opacity */
+            transition: opacity 2s ease; /* Smooth transition for opacity */
+            text-decoration: none; /* Remove text decoration */
+            border: none; /* Remove border */
+        }
+
+        #messages {
+            position: relative; /* Position relative for absolute positioning of messages */
+            height: calc(100vh - 40px); /* Adjust height for scrollbar */
+            overflow-y: auto; /* Vertical scrollbar */
+            padding: 20px;
+        }
+
+        .message {
+            position: absolute;
+            left: -200px; /* Initially position messages off-screen to the left */
+            white-space: nowrap; /* Prevent wrapping of messages */
+            animation: moveRight 10s linear infinite; /* Animate movement */
+        }
+
+        @keyframes moveRight {
+            0% {
+                left: -200px; /* Start position */
+            }
+            100% {
+                left: calc(100% + 200px); /* End position */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="staticText" style="font-size: 36px;">UQCPtEpj4jHllb93auw1JhoCImqH5AtJB5KyF5UH51FlUFeu<br><span style="opacity: 0.5;">probably just for fun, probably JFF</span></div>
+    <div id="messages"></div>
+    <script>
+        const messagesDiv = document.getElementById('messages');
+        const staticText = document.getElementById('staticText');
+        
+        // Show static text after 3 seconds
+        setTimeout(() => {
+            staticText.style.opacity = '1'; // Make the static text visible
+        }, 3000);
+
+        const ws = new WebSocket('ws://localhost:3000');
+
+        ws.onmessage = (event) => {
+            setTimeout(() => {
+                const message = document.createElement('div');
+                message.className = 'message';
+                message.textContent = event.data;
+                setPosition(message); // Set position before appending
+                messagesDiv.appendChild(message);
+            }, Math.random() * 5000); // Random delay between 0 and 5 seconds
+        };
+
+        ws.onclose = () => {
+            console.log('Connection closed');
+        };
+
+        function setPosition(message) {
+            // Get a random vertical position
+            const windowHeight = window.innerHeight;
+            const messageHeight = 20; // Adjust as needed
+            const randomTop = Math.floor(Math.random() * (windowHeight - messageHeight));
+            
+            // Check if the message overlaps with existing messages
+            let overlap = false;
+            messagesDiv.childNodes.forEach(existingMessage => {
+                const existingTop = parseInt(existingMessage.style.top);
+                if (Math.abs(existingTop - randomTop) < messageHeight) {
+                    overlap = true;
+                }
+            });
+            
+            // Set the top position if no overlap
+            if (!overlap) {
+                message.style.top = `${randomTop}px`;
+            } else {
+                // Try setting position again
+                setPosition(message);
+            }
+        }
+    </script>
+</body>
+</html>
